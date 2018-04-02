@@ -18,10 +18,12 @@ function labConvert(o) {
     return new Lab(o.l, Math.cos(h) * o.c, Math.sin(h) * o.c, o.opacity);
   }
   if (!(o instanceof Rgb)) o = rgbConvert(o);
-  var xyz = rgb2xyz(o.r, o.g, o.b),
-      x = xyz2lab(xyz.x / Xn),
-      y = xyz2lab(xyz.y / Yn),
-      z = xyz2lab(xyz.z / Zn);
+  var r = rgb2lrgb(o.r), 
+      g = rgb2lrgb(o.g),
+      b = rgb2lrgb(o.b),
+      x = xyz2lab((0.43607464461952 * r + 0.38506490738884 * g + 0.14308038013430 * b) / Xn),
+      y = xyz2lab((0.22250451610963 * r + 0.71687863757512 * g + 0.06061693873869 * b) / Yn),
+      z = xyz2lab((0.01393217455388 * r + 0.09710449680767 * g + 0.71417326495581 * b) / Zn);
   return new Lab(116 * y - 16, 500 * (x - y), 200 * (y - z), o.opacity);
 }
 
@@ -46,13 +48,17 @@ define(Lab, lab, extend(Color, {
   rgb: function() {
     var y = (this.l + 16) / 116,
         x = isNaN(this.a) ? y : y + this.a / 500,
-        z = isNaN(this.b) ? y : y - this.b / 200,
-        rgb = xyz2rgb(
-          Xn * lab2xyz(x),
-          Yn * lab2xyz(y),
-          Zn * lab2xyz(z)
-        );
-    return new Rgb(rgb.r, rgb.g, rgb.b, this.opacity);
+        z = isNaN(this.b) ? y : y - this.b / 200;
+
+    x = Xn * lab2xyz(x);
+    y = Yn * lab2xyz(y);
+    z = Zn * lab2xyz(z);
+
+    var r = 3.13385604762399 * x - 1.61686649389546 * y - 0.49061478602705 * z,
+        g = -0.978768252303 * x + 1.91614136757508 * y + 0.03345407381436001 * z,
+        b = 0.07194528863713 * x - 0.22899137264466002 * y + 1.40524267684777 * z;
+
+    return new Rgb(lrgb2rgb(r), lrgb2rgb(g), lrgb2rgb(b), this.opacity);
   }
 }));
 
@@ -67,33 +73,6 @@ function lab2xyz(t) {
 function lrgb2rgb(x) {
   return 255 * (x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055);
 }
-
-function xyz2rgb(x, y, z) {
-  // D50 -> D65
-  var x1 = x * 0.9555766 - y * 0.0230393 + z * 0.0631636;
-  var y1 = x * -0.0282895 + y * 1.0099416 + z * 0.0210077;
-  var z1 = x * 0.0122982 - y * 0.0204830 + z * 1.3299098;
-  return {
-    r: lrgb2rgb(3.2404542 * x1 - 1.5371385 * y1 - 0.4985314 * z1),
-    g: lrgb2rgb(-0.9692660 * x1 + 1.8760108 * y1 + 0.0415560 * z1),
-    b: lrgb2rgb(0.0556434 * x1 - 0.2040259 * y1 + 1.0572252 * z1)
-  };
-}
-
-function rgb2xyz(r, g, b) {
-  r = rgb2lrgb(r), g = rgb2lrgb(g), b = rgb2lrgb(b);
-  var x = 0.4124564 * r + 0.3575761 * g + 0.1804375 * b,
-      y = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b,
-      z = 0.0193339 * r + 0.1191920 * g + 0.9503041 * b;
-  // D65 -> D50
-  return {
-    x: x * 1.0478112 + y * 0.0228866 - z * 0.0501270,
-    y: x * 0.0295424 + y * 0.9904844 - z * 0.0170491,
-    z: x * -0.0092345 + y * 0.0150436 + z * 0.7521316
-  };
-}
-
-
 
 function rgb2lrgb(x) {
   return (x /= 255) <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
