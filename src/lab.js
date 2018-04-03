@@ -5,7 +5,7 @@ import {deg2rad, rad2deg} from "./math";
 var Kn = 18,
     Xn = 0.9642, // D50 standard referent
     Yn = 1.0000,
-    Zn = 0.8249,
+    Zn = 0.82521,
     t0 = 4 / 29,
     t1 = 6 / 29,
     t2 = 3 * t1 * t1,
@@ -22,9 +22,11 @@ function labConvert(o) {
       g = rgb2lrgb(o.g),
       b = rgb2lrgb(o.b),
 
-      x = xyz2lab((0.436074644619520000 * r + 0.38506490738883997 * g + 0.14308038013429997 * b) / Xn),
-      y = xyz2lab((0.222504516109629990 * r + 0.71687863757512000 * g + 0.06061693873868999 * b) / Yn),
-      z = xyz2lab((0.013932174553880001 * r + 0.09710449680767000 * g + 0.71417326495581000 * b) / Zn);
+      // linear RGB -> XYZ (D50)
+      // http://www.brucelindbloom.com/index.html?Eqn_RGB_to_XYZ.html
+      x = xyz2lab((0.4360747 * r + 0.3850649 * g + 0.1430804 * b) / Xn),
+      y = xyz2lab((0.2225045 * r + 0.7168786 * g + 0.0606169 * b) / Yn),
+      z = xyz2lab((0.0139322 * r + 0.0971045 * g + 0.7141733 * b) / Zn);
   return new Lab(116 * y - 16, 500 * (x - y), 200 * (y - z), o.opacity);
 }
 
@@ -55,9 +57,11 @@ define(Lab, lab, extend(Color, {
     y = Yn * lab2xyz(y);
     z = Zn * lab2xyz(z);
     
-    var r =  3.13385604762399 * x - 1.61686649389546000 * y - 0.49061478602705000 * z,
-        g = -0.97876825230300 * x + 1.91614136757508000 * y + 0.03345407381436001 * z,
-        b =  0.07194528863713 * x - 0.22899137264466002 * y + 1.40524267684777000 * z;
+    // XYZ (D50) -> linear RGB
+    // http://www.brucelindbloom.com/index.html?Eqn_RGB_to_XYZ.html
+    var r =  3.1338561 * x - 1.6168667 * y - 0.4906146 * z,
+        g = -0.9787684 * x + 1.9161415 * y + 0.0334540 * z,
+        b =  0.0719453 * x - 0.2289914 * y + 1.4052427 * z;
 
     return new Rgb(lrgb2rgb(r), lrgb2rgb(g), lrgb2rgb(b), this.opacity);
   }
