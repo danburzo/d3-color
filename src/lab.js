@@ -15,7 +15,7 @@ function labConvert(o) {
   if (o instanceof Lab) return new Lab(o.l, o.a, o.b, o.opacity);
   if (o instanceof Hcl) {
     var h = o.h * deg2rad;
-    return new Lab(o.l, Math.cos(h) * o.c, Math.sin(h) * o.c, o.opacity);
+    return new Lab(o.l, isNaN(h) ? 0 : Math.cos(h) * o.c, isNaN(h) ? 0 : Math.sin(h) * o.c, o.opacity);
   }
   if (!(o instanceof Rgb)) o = rgbConvert(o);
   var b = rgb2xyz(o.r),
@@ -80,8 +80,9 @@ function rgb2xyz(x) {
 function hclConvert(o) {
   if (o instanceof Hcl) return new Hcl(o.h, o.c, o.l, o.opacity);
   if (!(o instanceof Lab)) o = labConvert(o);
-  var h = Math.atan2(o.b, o.a) * rad2deg;
-  return new Hcl(h < 0 ? h + 360 : h, Math.sqrt(o.a * o.a + o.b * o.b), o.l, o.opacity);
+  var c = Math.sqrt(o.a * o.a + o.b * o.b);
+  var h = Math.round(c * 10000) === 0 ? NaN : Math.atan2(o.b, o.a) * rad2deg;
+  return new Hcl(h < 0 ? h + 360 : h, c, o.l, o.opacity);
 }
 
 export function hcl(h, c, l, opacity) {
